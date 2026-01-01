@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aadhaar Fraud Detection System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 650px;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .title {
+            text-align: center;
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.85;
+            margin-bottom: 25px;
+        }
+
+        .upload-box {
+            border: 2px dashed rgba(255,255,255,0.4);
+            padding: 25px;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .upload-box input {
+            display: none;
+        }
+
+        .upload-box:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .btn {
+            margin-top: 20px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .result {
+            display: none;
+            margin-top: 25px;
+            background: rgba(0,0,0,0.35);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .status {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .real {
+            background: rgba(40, 167, 69, 0.85);
+        }
+
+        .fake {
+            background: rgba(220, 53, 69, 0.9);
+        }
+
+        .field {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            font-size: 15px;
+        }
+
+        .field:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            opacity: 0.85;
+        }
+
+        .value {
+            font-weight: bold;
+        }
+
+        .issues {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #ffbaba;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="title">Aadhaar Fraud Detection</div>
+    <div class="subtitle">AI-powered Identity Verification System</div>
+
+    <form id="uploadForm">
+        <label class="upload-box">
+            📄 Click to upload Aadhaar image
+            <input type="file" name="file" required>
+        </label>
+
+        <button class="btn" type="submit">Verify Aadhaar</button>
+    </form>
+
+    <div class="loading" id="loading">🔍 Processing Aadhaar… Please wait</div>
+
+    <div class="result" id="result">
+        <div class="status" id="statusText"></div>
+
+        <div class="field">
+            <span class="label">Aadhaar / VID</span>
+            <span class="value" id="aadhaar"></span>
+        </div>
+
+        <div class="field">
+            <span class="label">Date of Birth</span>
+            <span class="value" id="dob"></span>
+        </div>
+
+        <div class="field">
+            <span class="label">Gender</span>
+            <span class="value" id="gender"></span>
+        </div>
+
+        <div class="issues" id="issues"></div>
+    </div>
+
+    <footer>
+        © Aadhaar Fraud Detection System | Flask Backend
+    </footer>
+</div>
+
+<script>
+document.getElementById("uploadForm").onsubmit = async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const loading = document.getElementById("loading");
+    const result = document.getElementById("result");
+
+    loading.style.display = "block";
+    result.style.display = "none";
+
+    const response = await fetch("/verify", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    loading.style.display = "none";
+    result.style.display = "block";
+
+    const statusText = document.getElementById("statusText");
+
+    if (data.status === "REAL") {
+        statusText.textContent = "✅ Aadhaar is REAL";
+        statusText.className = "status real";
+    } else {
+        statusText.textContent = "❌ Aadhaar is SUSPICIOUS";
+        statusText.className = "status fake";
+    }
+
+    document.getElementById("aadhaar").textContent =
+        data.fields.aadhaar || data.fields.vid || "Not found";
+
+    document.getElementById("dob").textContent =
+        data.fields.dob || "Not found";
+
+    document.getElementById("gender").textContent =
+        data.fields.gender || "Not found";
+
+    document.getElementById("issues").textContent =
+        data.issues.length ? "⚠ Issues: " + data.issues.join(", ") : "";
+};
+</script>
+
+</body>
+</html>
